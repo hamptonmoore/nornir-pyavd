@@ -1,0 +1,19 @@
+---
+# Set the Fabric Name - must match an Ansible Inventory Group
+fabric_name: DC1_FABRIC
+
+# Set Design Type to l2ls
+design:
+  type: l2ls
+
+# Leaf Switches
+leaf:
+  node_groups:
+    - group: BASEMENT
+      nodes:
+        - name: core.bos1.hammy.network
+          id: 1
+
+# Documentation
+eos_designs_documentation:
+  connected_endpoints: true

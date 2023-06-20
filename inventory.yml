@@ -1,0 +1,16 @@
+# inventory.yml
+all:
+  children:
+    DC1_FABRIC:
+      children:
+        DC1_LEAFS:
+          hosts:
+            core.bos1.hammy.network:
+              EAPI_ENDPOINT: 192.168.86.2
+              DEPLOY_MODE: eapi
+    DC1_NETWORK_SERVICES:
+      children:
+        DC1_LEAFS:
+    DC1_NETWORK_PORTS:
+      children:
+        DC1_LEAFS:

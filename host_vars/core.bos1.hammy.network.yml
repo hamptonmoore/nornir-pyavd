@@ -1,0 +1,32 @@
+---
+type: leaf     # Must be leaf
+
+custom_structured_configuration_vlan_interfaces:
+  - name: Vlan2
+    ip_address: "dhcp"
+    vrf: default
+    eos_cli: dhcp client accept default-route
+  - name: Vlan3
+    ip_address: 192.168.1.2/24
+    vrf: default
+  - name: Vlan4
+    ip_address: 192.168.86.2/24
+    vrf: default
+
+custom_structured_configuration_eos_cli: |
+  environment insufficient-fans action ignore
+  environment fan-speed override 30
+
+custom_structured_configuration_banners:
+  login: |
+    __________________
+    < Please stay away >
+    ------------------
+      \
+        \
+
+        |\_/|
+        |o o|__
+        --*--__\
+        C_C_(___)
+    EOF

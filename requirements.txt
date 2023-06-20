@@ -1,0 +1,4 @@
+pyavd==4.0.0a2
+nornir-ansible==2022.7.30
+nornir==3.3.0
+nornir-utils==0.2.0

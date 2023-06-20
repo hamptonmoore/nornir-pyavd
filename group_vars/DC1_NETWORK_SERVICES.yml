@@ -1,0 +1,13 @@
+---
+tenants:
+  - name: MY_FABRIC
+    l2vlans:
+      - id: 2
+        name: 'SELCO_WAN'
+        tags: [selco]
+      - id: 3
+        name: 'HAMMY_LAN'
+        tags: [hammy]
+      - id: 4
+        name: 'MOORE_LAN'
+        tags: [moore]

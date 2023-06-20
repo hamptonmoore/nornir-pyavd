@@ -1,0 +1,72 @@
+---
+connected_endpoints_keys:
+  - key: devices
+    type: devices
+
+port_profiles:
+  - profile: PP-DEFAULTS
+    parent_profile: PP-DEFAULTS
+  - profile: PP-SELCO
+    mode: access
+    vlans: "2"
+    parent_profile: PP-DEFAULTS
+  - profile: PP-HAMMY
+    mode: access
+    vlans: "3"
+  - profile: PP-MOORE
+    mode: access
+    vlans: "4"
+  - profile: PP-TRUNK
+    mode: trunk
+    vlans: "2-4"
+    parent_profile: PP-DEFAULTS
+
+devices:
+  - name: SELCO_DROP
+    rack: BASEMENT
+    adapters:
+      - endpoint_ports: [Unknown]
+        switch_ports: [Ethernet2]
+        switches: [core.bos1.hammy.network]
+        profile: PP-SELCO
+
+  - name: EdgeRouter
+    rack: BASEMENT
+    adapters:
+      - endpoint_ports: [eth0]
+        switch_ports: [Ethernet3]
+        switches: [core.bos1.hammy.network]
+        profile: PP-SELCO
+      - endpoint_ports: [eth2]
+        switch_ports: [Ethernet23]
+        switches: [core.bos1.hammy.network]
+        profile: PP-HAMMY
+
+  - name: Google_Home_Hub
+    rack: BASEMENT
+    adapters:
+      - endpoint_ports: [Lan1]
+        switch_ports: [Ethernet1]
+        switches: [core.bos1.hammy.network]
+        profile: PP-MOORE
+      - endpoint_ports: [Wan0]
+        switch_ports: [Ethernet5]
+        switches: [core.bos1.hammy.network]
+        profile: PP-SELCO
+
+  - name: Desktop
+    rack: BASEMENT
+    adapters:
+      - endpoint_ports: [eth0]
+        switch_ports: [Ethernet24]
+        switches: [core.bos1.hammy.network]
+        profile: PP-TRUNK
+
+  - name: Hubble
+    rack: BASEMENT
+    adapters:
+      - endpoint_ports: [eno3]
+        switch_ports: [Ethernet48]
+        switches: [core.bos1.hammy.network]
+        profile: PP-TRUNK
+
