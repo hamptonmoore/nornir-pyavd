@@ -1,7 +1,8 @@
 from nornir import InitNornir
 import pyavd
+import logging
 import difflib
-from nornir.core.task import Task, Result
+from nornir.core.task import Task, Result, AggregatedResult
 from nornir_utils.plugins.functions import print_result
 
 def build_config(task: Task, structured_configs):
@@ -21,7 +22,9 @@ def diff_config(task: Task):
     for line in difflib.unified_diff(task.host.data["running-config"].split("\n"), task.host.data["designed-config"].split("\n"), fromfile='running-config', tofile='designed-config', lineterm=''):
         diff += f'{line}\n'
         changed = True
-    return Result(host=task.host, diff=diff, changed=changed)
+    if changed:
+        return Result(host=task.host, diff=diff, failed=True)
+    return Result(host=task.host, diff=diff, changed=False)
 
 def deploy_config(task: Task):
     with open(f'configs/{task.host.name}.cfg', "w") as f:
@@ -31,9 +34,7 @@ def deploy_config(task: Task):
 def config_management(task: Task, structured_configs):
     task.run(task=build_config, structured_configs=structured_configs)
     task.run(task=pull_config)
-    result = task.run(task=diff_config)[0]
-    if result.changed:
-        task.run(task=deploy_config)
+    task.run(task=diff_config)
 
 def run():
     # Initialize Nornir object from config_file
@@ -52,7 +53,11 @@ def run():
 
         structured_configs[hostname] = res
 
+    pyavd.validate_inputs(structured_configs, eos_designs=False, eos_cli_config_gen=True)
     output = nr.run(task=config_management, structured_configs = structured_configs)
-    print_result(output)
-
+    filtered = AggregatedResult(name="Failed molecules")
+    for host in output:
+        if host in output.failed_hosts:
+            filtered[host] = output[host]
+    print_result(filtered, severity_level=logging.ERROR)
 run()
