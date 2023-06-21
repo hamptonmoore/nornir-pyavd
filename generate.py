@@ -4,9 +4,8 @@ import difflib
 from nornir.core.task import Task, Result
 from nornir_utils.plugins.functions import print_result
 
-def build_config(task: Task, eos_designs, avd_facts):
-    structured_config = pyavd.get_device_structured_config(task.host.name, eos_designs[task.host.name], avd_facts=avd_facts)
-    config = pyavd.get_device_config(task.host.name, structured_config)
+def build_config(task: Task, structured_configs):
+    config = pyavd.get_device_config(task.host.name, structured_configs[task.host.name])
 
     task.host.data["designed-config"] = config
     return Result(host=task.host)
@@ -29,8 +28,8 @@ def deploy_config(task: Task):
         f.write(task.host.data["designed-config"])
     return Result(host=task.host, changed=True)
 
-def config_management(task: Task, eos_designs, avd_facts):
-    task.run(task=build_config, eos_designs=eos_designs, avd_facts=avd_facts)
+def config_management(task: Task, structured_configs):
+    task.run(task=build_config, structured_configs=structured_configs)
     task.run(task=pull_config)
     result = task.run(task=diff_config)[0]
     if result.changed:
@@ -40,7 +39,7 @@ def run():
     # Initialize Nornir object from config_file
     nr = InitNornir(config_file="config.yml")
 
-    eos_designs = {}
+    structured_configs = {}
 
     for hostname in nr.inventory.hosts:
         host = nr.inventory.hosts[hostname]
@@ -51,15 +50,9 @@ def run():
         for (k, v) in data:
             res[k] = v
 
-        eos_designs[hostname] = res
+        structured_configs[hostname] = res
 
-    # Validate input and convert types as needed
-    pyavd.validate_inputs(eos_designs)
-
-    # Generate facts
-    avd_facts = pyavd.get_avd_facts(eos_designs)
-
-    output = nr.run(task=config_management, eos_designs=eos_designs, avd_facts=avd_facts)
+    output = nr.run(task=config_management, structured_configs = structured_configs)
     print_result(output)
 
 run()
