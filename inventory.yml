@@ -6,7 +6,7 @@ all:
         DC1_LEAFS:
           hosts:
             core.bos1.hammy.network:
-              EAPI_ENDPOINT: 192.168.86.2
+              EAPI_ENDPOINT: 192.168.1.2
               DEPLOY_MODE: eapi
     DC1_NETWORK_SERVICES:
       children:
