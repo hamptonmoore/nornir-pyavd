@@ -6,13 +6,14 @@ from nornir_utils.plugins.functions import print_result
 from dotenv import load_dotenv
 import src.edgerouter.edgerouter as edgerouter
 import src.eos.eos as eos
+from tqdm import tqdm
 
 load_dotenv()
 
 def build_config(task: Task, eos_designs, avd_facts):
     structured_config = pyavd.get_device_structured_config(task.host.name, eos_designs[task.host.name], avd_facts=avd_facts)
 
-    config = task.host.data["manager"].get_device_config(task.host.hostname, structured_config)
+    config = task.host.data["manager"].generate_config(task.host.hostname, structured_config)
     
     task.host.data["designed-config"] = config
     return Result(host=task.host)
@@ -47,38 +48,52 @@ def save_config(task: Task):
         f.write(task.host.data["designed-config"])
     return Result(host=task.host, changed=True)
 
+def increment_progress(progress: tqdm, msg=""):
+    progress.update()
+    progress.display()
+    if msg != "":
+        progress.write(f'{progress.desc}: {msg}')
+
 def config_management(task: Task, eos_designs, avd_facts, scope="local"):
-    device = task.host.data["device"]
-    if device == "eos":
-        task.host.data["manager"] = eos
-    elif device == "edgerouter":
-        task.host.data["manager"] = edgerouter
-    else:
-        return Result(host=task.host, failed=True, result=f'Device {device} is unknown')
-    
-    task.run(task=build_config, eos_designs=eos_designs, avd_facts=avd_facts)
+    total = 2 if scope == "local" else 3
+    with tqdm(total=total, position=task.host.data["chart_id"], desc=f'{task.host.hostname}') as progress:
+        device = task.host.data["device"]
+        if device == "eos":
+            task.host.data["manager"] = eos
+        elif device == "edgerouter":
+            task.host.data["manager"] = edgerouter
+        else:
+            return Result(host=task.host, failed=True, result=f'Device {device} is unknown')
+        
+        task.run(task=build_config, eos_designs=eos_designs, avd_facts=avd_facts)
+        increment_progress(progress)
+        
+        task.host.data["config-path"] = os.path.abspath(f'configs/{task.host.name}.cfg')
+        task.run(task=pull_config_local)
+        result = task.run(task=diff_config)[0]
 
-    task.host.data["config-path"] = os.path.abspath(f'configs/{task.host.name}.cfg')
-    task.run(task=pull_config_local)
-    result = task.run(task=diff_config)[0]
+        if result.changed:
+            task.run(task=save_config)
+        increment_progress(progress)
 
-    if result.changed:
-        task.run(task=save_config)
 
-    if scope == "deploy":
-        task.host.data["username"] = os.getenv('DEPLOY_USERNAME')
-        task.host.data["password"] = os.getenv('DEPLOY_PASSWORD')
-        task.run(task=deploy_configs)
-        return
+        if scope == "deploy":
+            task.host.data["username"] = os.getenv('DEPLOY_USERNAME')
+            task.host.data["password"] = os.getenv('DEPLOY_PASSWORD')
+            task.run(task=deploy_configs)
+            increment_progress(progress)
+            return
 
 def run():
     # Initialize Nornir object from config_file
     nr = InitNornir(config_file="config.yml")
 
     eos_designs = {}
-
+    id = 0
     for hostname in nr.inventory.hosts:
         host = nr.inventory.hosts[hostname]
+        host.data["chart_id"] = id
+        id += 1
 
         # Using .dict() or .data was not getting the group variables
         data = host.items()

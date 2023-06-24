@@ -17,6 +17,9 @@ system {
         send-crash-report false
     }
     host-name {{ hostname }}
+    {% for server in ip_name_servers %}
+    name-server {{ server["ip_address"] }}
+    {% endfor %}
     login {
         {% if banners is defined %}
         banner {

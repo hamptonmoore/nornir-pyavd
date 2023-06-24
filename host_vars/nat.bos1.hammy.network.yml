@@ -119,7 +119,7 @@ custom_structured_configuration_eos_cli: |
               authoritative enable
               subnet 192.168.1.0/24 {
                   default-router 192.168.1.1
-                  dns-server 192.168.1.1
+                  dns-server 1.1.1.1
                   lease 86400
                   start 192.168.1.38 {
                       stop 192.168.1.243

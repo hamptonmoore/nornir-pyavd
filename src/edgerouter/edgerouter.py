@@ -10,7 +10,7 @@ def setup_jinja():
     templateEnv = jinja2.Environment(loader=templateLoader)
     return templateEnv
 
-def get_device_config(hostname: str, structured_config):
+def generate_config(hostname: str, structured_config):
     templateEnv = setup_jinja()
     # import json
     # print(json.dumps(structured_config, indent=4))
@@ -32,7 +32,7 @@ def deploy(task: Task):
     # Copy config to device from terminal
     config = task.host.data["designed-config"].replace("$", "\$")
     ssh_connection.send_command(f'cat <<EOF > /config/config.boot\n{config}\nEOF\n', cmd_verify=False)
-    ssh_connection.send_command("\nconfigure\n", cmd_verify=False)
+    ssh_connection.config_mode()
     loadResult = ssh_connection.send_command("load\n", cmd_verify=False)
     if "failed" in loadResult.lower() or "error" in loadResult.lower() or "invalid" in loadResult.lower() or "not valid" in loadResult.lower():
         return Result(host=task.host, failed=True, result=loadResult)

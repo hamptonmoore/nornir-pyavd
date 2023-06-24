@@ -27,5 +27,5 @@ def deploy(task: Task):
     changed = response['result'][4]['output'] != ""
     return Result(host=task.host, changed=changed, diff=response['result'][4]['output'])
 
-def get_device_config(hostname: str, structured_config):
+def generate_config(hostname: str, structured_config):
     return pyavd.get_device_config(hostname, structured_config)

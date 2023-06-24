@@ -20,7 +20,7 @@ mgmt_interface_vrf: default
 
 # dns servers.
 name_servers:
-  - 8.8.4.4
+  - 1.1.1.1
   - 8.8.8.8
 
 cvp_instance_ip: 192.168.1.3
