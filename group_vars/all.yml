@@ -9,6 +9,7 @@ local_users:
     privilege: 15
     role: network-admin
     sha512_password: "REPLACEMENTS_SHAPASSWORD"
+    ssh_key: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHavg+rhFmR2p9wuWiO4VxKaIXpq1gOm17jCoZ9jMxvL
   - name: admin
     privilege: 15
     role: network-admin
@@ -23,6 +24,20 @@ name_servers:
   - 8.8.8.8
 
 cvp_instance_ip: 192.168.1.3
+
+custom_structured_configuration_banners:
+  login: |
+    __________________
+    < Please stay away >
+    ------------------
+      \
+        \
+
+        |\_/|
+        |o o|__
+        --*--__\
+        C_C_(___)
+    EOF
 
 # NTP Servers IP or DNS name, first NTP server will be preferred, and sourced from Management VRF
 custom_structured_configuration_ntp:

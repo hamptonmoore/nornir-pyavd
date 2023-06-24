@@ -1,6 +1,7 @@
-import pyeapi
+import pyeapi, pyavd
 import ssl
 from nornir.core.task import Task, Result
+
 
 def deploy(task: Task):
     cmds = [
@@ -21,7 +22,10 @@ def deploy(task: Task):
     context.set_ciphers('AES256-SHA:DHE-RSA-AES256-SHA:AES128-SHA:DHE-RSA-AES128-SHA')
 
     # Connection to Client
-    conn = pyeapi.client.connect(host=task.host.data["EAPI_ENDPOINT"], username=task.host.data["username"], password=task.host.data["password"], context=context)
+    conn = pyeapi.client.connect(host=task.host.data["host"], username=task.host.data["username"], password=task.host.data["password"], context=context)
     response = conn.execute(cmds, encoding="text")
     changed = response['result'][4]['output'] != ""
     return Result(host=task.host, changed=changed, diff=response['result'][4]['output'])
+
+def get_device_config(hostname: str, structured_config):
+    return pyavd.get_device_config(hostname, structured_config)

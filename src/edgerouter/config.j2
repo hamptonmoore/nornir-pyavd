@@ -18,6 +18,11 @@ system {
     }
     host-name {{ hostname }}
     login {
+        {% if banners is defined %}
+        banner {
+            pre-login "{{ banners.login | replace("\\", "\\\\") | replace("\n", "\\n") | replace("EOF", "") }}"
+        }
+        {% endif %}
         {% for user in local_users %}
         user {{ user.name }} {
             authentication {

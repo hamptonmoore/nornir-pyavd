@@ -12,20 +12,14 @@ load_dotenv()
 def build_config(task: Task, eos_designs, avd_facts):
     structured_config = pyavd.get_device_structured_config(task.host.name, eos_designs[task.host.name], avd_facts=avd_facts)
 
-    render_mode = task.host.data["RENDER_MODE"]
-    if render_mode == "AVD":
-        config = pyavd.get_device_config(task.host.name, structured_config)
-    elif render_mode == "edgerouter":
-        config = edgerouter.get_device_config(task.host.name, structured_config)
-    else:
-        return Result(host=task.host, failed=True, result=f'Render mode {render_mode} does not exist')
-
+    config = task.host.data["manager"].get_device_config(task.host.hostname, structured_config)
+    
     task.host.data["designed-config"] = config
     return Result(host=task.host)
 
 def pull_config_local(task: Task):
     try:
-        with open(f'configs/{task.host.name}.cfg', "r") as f:
+        with open(task.host.data["config-path"], "r") as f:
             task.host.data["running-config"] = f.read()
     except FileNotFoundError:
         task.host.data["running-config"] = ""
@@ -46,26 +40,25 @@ def deploy_configs(task: Task):
         if key.startswith("REPLACEMENTS_"):
             task.host.data["designed-config"] = task.host.data["designed-config"].replace(key, os.environ.get(key))
 
-    deploy_mode = task.host.data["DEPLOY_MODE"]
-    if deploy_mode == "eapi":
-        task.run(eos.deploy)
-    elif deploy_mode == "edgerouter":
-        task.run(edgerouter.deploy)
-    else:
-        return Result(host=task.host, failed=True, result=f'Deploy mode {task.host.data["DEPLOY_MODE"]} is unknown')
-
+    task.run(task.host.data["manager"].deploy)
 
 def save_config(task: Task):
-    with open(f'configs/{task.host.name}.cfg', "w") as f:
+    with open(task.host.data["config-path"], "w") as f:
         f.write(task.host.data["designed-config"])
     return Result(host=task.host, changed=True)
 
 def config_management(task: Task, eos_designs, avd_facts, scope="local"):
-    if "RENDER_MODE" not in task.host.data:
-        task.host.data["RENDER_MODE"] = "AVD"
-
+    device = task.host.data["device"]
+    if device == "eos":
+        task.host.data["manager"] = eos
+    elif device == "edgerouter":
+        task.host.data["manager"] = edgerouter
+    else:
+        return Result(host=task.host, failed=True, result=f'Device {device} is unknown')
+    
     task.run(task=build_config, eos_designs=eos_designs, avd_facts=avd_facts)
 
+    task.host.data["config-path"] = os.path.abspath(f'configs/{task.host.name}.cfg')
     task.run(task=pull_config_local)
     result = task.run(task=diff_config)[0]
 
@@ -75,8 +68,6 @@ def config_management(task: Task, eos_designs, avd_facts, scope="local"):
     if scope == "deploy":
         task.host.data["username"] = os.getenv('DEPLOY_USERNAME')
         task.host.data["password"] = os.getenv('DEPLOY_PASSWORD')
-        # if result.changed:
-        #     return Result(host=task.host, result="cannot deploy when local config differs from designed config", failed=True)
         task.run(task=deploy_configs)
         return
 
