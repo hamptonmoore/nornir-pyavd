@@ -9,10 +9,14 @@ design:
 # Leaf Switches
 leaf:
   node_groups:
-    - group: BASEMENT
+    - group: CORE
       nodes:
         - name: core.bos1.hammy.network
           id: 1
+    - group: NAT
+      nodes:
+        - name: nat.bos1.hammy.network
+          id: 2
 
 # Documentation
 eos_designs_documentation:

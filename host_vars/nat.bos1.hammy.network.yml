@@ -1,0 +1,169 @@
+---
+custom_structured_configuration_static_routes:
+  - vrf: "default"
+    name: "Moore LAN"
+    destination_address_prefix: "192.168.86.0/24"
+    gateway: "192.168.1.2"
+
+custom_structured_configuration_eos_cli: |
+    firewall {
+      all-ping enable
+      broadcast-ping disable
+      ip-src-route disable
+      log-martians enable
+      name WAN_IN {
+          default-action drop
+          description "WAN to internal"
+          rule 10 {
+              action accept
+              description "Allow established/related"
+              state {
+                  established enable
+                  related enable
+              }
+          }
+          rule 20 {
+              action drop
+              description "Drop invalid state"
+              state {
+                  invalid enable
+              }
+          }
+      }
+      name WAN_LOCAL {
+          default-action drop
+          description "enable ping"
+          rule 10 {
+              action accept
+              description "Allow established/related"
+              state {
+                  established enable
+                  related enable
+              }
+          }
+          rule 20 {
+              action drop
+              description "Drop invalid state"
+              state {
+                  invalid enable
+              }
+          }
+      }
+      receive-redirects disable
+      send-redirects enable
+      source-validation disable
+      syn-cookies enable
+    }
+    interfaces {
+        ethernet eth0 {
+            address dhcp
+            description Internet
+            duplex auto
+            firewall {
+                in {
+                    name WAN_IN
+                }
+                local {
+                    name WAN_LOCAL
+                }
+            }
+            speed auto
+        }
+        ethernet eth1 {
+            description Local
+            duplex auto
+            speed auto
+        }
+        ethernet eth2 {
+            description Local
+            duplex auto
+            speed auto
+        }
+        ethernet eth3 {
+            description Local
+            duplex auto
+            speed auto
+        }
+        ethernet eth4 {
+            description Local
+            duplex auto
+            poe {
+                output off
+            }
+            speed auto
+        }
+        loopback lo {
+        }
+        switch switch0 {
+            address 192.168.1.1/24
+            description Local
+            mtu 1500
+            switch-port {
+                interface eth1 {
+                }
+                interface eth2 {
+                }
+                interface eth3 {
+                }
+                interface eth4 {
+                }
+                vlan-aware disable
+            }
+        }
+    }
+    service {
+      dhcp-server {
+          disabled false
+          hostfile-update disable
+          shared-network-name LAN {
+              authoritative enable
+              subnet 192.168.1.0/24 {
+                  default-router 192.168.1.1
+                  dns-server 192.168.1.1
+                  lease 86400
+                  start 192.168.1.38 {
+                      stop 192.168.1.243
+                  }
+              }
+          }
+          static-arp disable
+          use-dnsmasq disable
+      }
+      dns {
+          forwarding {
+              cache-size 150
+              listen-on switch0
+          }
+      }
+      gui {
+          http-port 80
+          https-port 443
+          older-ciphers enable
+      }
+      lldp {
+          interface eth0 {
+          }
+          management-address 192.168.1.1
+      }
+      nat {
+          rule 5010 {
+              description "masquerade for WAN"
+              outbound-interface eth0
+              type masquerade
+          }
+      }
+      snmp {
+          community monitor {
+              authorization ro
+          }
+      }
+      ssh {
+          port 22
+          protocol-version v2
+      }
+      unms {
+      }
+    }
+    /* Warning: Do not remove the following line. */
+    /* === vyatta-config-version: "config-management@1:conntrack@1:cron@1:dhcp-relay@1:dhcp-server@4:firewall@5:ipsec@5:nat@3:qos@1:quagga@2:suspend@1:system@5:ubnt-l2tp@1:ubnt-pptp@1:ubnt-udapi-server@1:ubnt-unms@2:ubnt-util@1:vrrp@1:vyatta-netflow@1:webgui@1:webproxy@1:zone-policy@1" === */
+    /* Release version: v2.0.9.5346345.201028.1647 */

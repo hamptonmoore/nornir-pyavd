@@ -8,6 +8,10 @@ all:
             core.bos1.hammy.network:
               EAPI_ENDPOINT: 192.168.1.2
               DEPLOY_MODE: eapi
+            nat.bos1.hammy.network:
+              SSH_ENDPOINT: 192.168.1.1
+              DEPLOY_MODE: edgerouter
+              RENDER_MODE: "edgerouter"
     DC1_NETWORK_SERVICES:
       children:
         DC1_LEAFS:

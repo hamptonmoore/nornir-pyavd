@@ -1,6 +1,4 @@
 ---
-type: leaf     # Must be leaf
-
 custom_structured_configuration_vlan_interfaces:
   - name: Vlan2
     ip_address: "dhcp"

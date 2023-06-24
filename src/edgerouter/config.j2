@@ -1,0 +1,57 @@
+protocols {
+  static {
+    {% for route in static_routes %}
+    route {{ route.destination_address_prefix }} {
+      next-hop {{ route.gateway }} {
+        description "{{route.name}}"
+      }
+    }
+    {% endfor %}
+  }
+}
+system {
+    analytics-handler {
+        send-analytics-report false
+    }
+    crash-handler {
+        send-crash-report false
+    }
+    host-name {{ hostname }}
+    login {
+        {% for user in local_users %}
+        user {{ user.name }} {
+            authentication {
+                encrypted-password {{ user.sha512_password }}
+                {% if user.ssh_key is defined %}
+                public-keys desktop {
+                    key {{ user.ssh_key.split(" ")[1] }}
+                    type {{ user.ssh_key.split(" ")[0] }}
+                }
+                {% endif %}
+            }
+            level admin
+        }
+        {% endfor %}
+    }
+    ntp {
+        {% for server in ntp.servers %}
+        server {{ server.name }} {
+        }
+        {% endfor %}
+    }
+    offload {
+        hwnat enable
+    }
+    syslog {
+        global {
+            facility all {
+                level notice
+            }
+            facility protocols {
+                level debug
+            }
+        }
+    }
+    time-zone UTC
+}
+{{eos_cli}}
